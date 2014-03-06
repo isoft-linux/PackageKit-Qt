@@ -47,7 +47,9 @@ set(packagekitqt_HEADERS
 
 set(packagekitqt_HEADERS_PRIVATE
     daemonprivate.h
-	transactionprivate.h
+    daemonproxy.h
+    transactionprivate.h
+    transactionproxy.h
     util.h
 )
 
@@ -55,8 +57,10 @@ set(packagekitqt_SRC
 	bitfield.cpp
 	daemon.cpp
     daemonprivate.cpp
+    daemonproxy.cpp
 	transaction.cpp
 	transactionprivate.cpp
+    transactionproxy.cpp
     eula.cpp
     package.cpp
     signature.cpp
