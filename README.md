@@ -5,6 +5,7 @@ PackageKit Qt Binding
 ## build && install
 
 ```
+cd PackageKit-Qt/
 mkdir -p build
 cd build
 cmake ..
