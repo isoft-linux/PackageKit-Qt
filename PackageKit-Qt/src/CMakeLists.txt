@@ -48,6 +48,7 @@ set(packagekitqt_HEADERS
 set(packagekitqt_HEADERS_PRIVATE
     daemonprivate.h
 	transactionprivate.h
+    util.h
 )
 
 set(packagekitqt_SRC
@@ -59,6 +60,7 @@ set(packagekitqt_SRC
     eula.cpp
     package.cpp
     signature.cpp
+    util.cpp
 )
 
 find_file(PK_INTERFACE_XML org.freedesktop.PackageKit.xml
