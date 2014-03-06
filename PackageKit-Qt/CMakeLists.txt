@@ -24,7 +24,7 @@ endif(${CMAKE_SOURCE_DIR} MATCHES ${CMAKE_BINARY_DIR})
 #
 # Options
 #
-option(USE_QT5 "Build against Qt5 instead of Qt4." OFF)
+option(USE_QT5 "Build against Qt5 instead of Qt4." ON)
 
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   set(CMAKE_INSTALL_PREFIX

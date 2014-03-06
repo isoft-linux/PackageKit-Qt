@@ -19,170 +19,209 @@
  * Boston, MA 02110-1301, USA.
  */
 
+#include <QtCore/QStringList>
+
 #include "transactionprivate.h"
 
-#include "transactionproxy.h"
-
-#include <QStringList>
-#include <QDebug>
+#include "package.h"
+#include "signature.h"
+#include "eula.h"
+#include "util.h"
 
 using namespace PackageKit;
 
 TransactionPrivate::TransactionPrivate(Transaction* parent) :
     q_ptr(parent),
     p(0),
-    role(Transaction::RoleUnknown)
+    destroyed(false)
 {
 }
 
-void TransactionPrivate::Details(const QString &pid,
+void TransactionPrivate::details(const QString &pid,
                                  const QString &license,
-                                 uint group,
+                                 const QString &group,
                                  const QString &detail,
                                  const QString &url,
                                  qulonglong size)
 {
     Q_Q(Transaction);
-    q->details(pid,
-               license,
-               static_cast<Transaction::Group>(group),
-               detail,
-               url,
-               size);
+    Package package(pid);
+    package.setLicense(license);
+    package.setGroup(static_cast<Package::Group>(Util::enumFromString<Package>(group, "Group", "Group")));
+    package.setDescription(detail);
+    package.setUrl(url);
+    package.setSize(size);
+
+    q->package(package);
 }
 
-void TransactionPrivate::distroUpgrade(uint type, const QString &name, const QString &description)
+QString TransactionPrivate::filtersToString(const QFlags<PackageKit::Transaction::Filter> &flags)
+{
+    QStringList flagStrings;
+    for (int i = Transaction::UnknownFilter; i < Transaction::FilterLast; i *= 2) {
+        if (static_cast<Transaction::Filter>(i) & flags) {
+            flagStrings.append(Util::enumToString<Transaction>(static_cast<Transaction::Filter>(i), "Filter", "Filter"));
+        }
+    }
+
+    return flagStrings.join(";");
+}
+
+void TransactionPrivate::distroUpgrade(const QString &type, const QString &name, const QString &description)
 {
     Q_Q(Transaction);
-    q->distroUpgrade(static_cast<Transaction::DistroUpgrade>(type),
+    int distroUpgradeType = Util::enumFromString<Transaction>(type, "DistroUpgrade", "DistroUpgrade");
+    q->distroUpgrade(static_cast<Transaction::DistroUpgrade>(distroUpgradeType),
                      name,
                      description);
 }
 
-void TransactionPrivate::errorCode(uint error, const QString &details)
+void TransactionPrivate::errorCode(const QString &error, const QString &details)
 {
     Q_Q(Transaction);
-    q->errorCode(static_cast<Transaction::Error>(error), details);
+    q->errorCode(static_cast<Transaction::Error>(Util::enumFromString<Transaction>(error, "Error", "Error")), details);
 }
 
-void TransactionPrivate::mediaChangeRequired(uint mediaType, const QString &mediaId, const QString &mediaText)
+void TransactionPrivate::eulaRequired(const QString &eulaId, const QString &pid, const QString &vendor, const QString &licenseAgreement)
 {
     Q_Q(Transaction);
-    q->mediaChangeRequired(static_cast<Transaction::MediaType>(mediaType),
+    Eula eula;
+    eula.id = eulaId;
+    eula.package = Package(pid);
+    eula.vendor = vendor;
+    eula.licenseAgreement = licenseAgreement;
+
+    q->eulaRequired(eula);
+}
+
+void TransactionPrivate::mediaChangeRequired(const QString &mediaType, const QString &mediaId, const QString &mediaText)
+{
+    Q_Q(Transaction);
+    int mediaTypeEnum = Util::enumFromString<Transaction>(mediaType, "MediaType", "Media");
+    q->mediaChangeRequired(static_cast<Transaction::MediaType>(mediaTypeEnum),
                            mediaId,
                            mediaText);
 }
 
-void TransactionPrivate::finished(uint exitCode, uint runtime)
+void TransactionPrivate::files(const QString &pid, const QString &filenames)
 {
     Q_Q(Transaction);
-    q->finished(static_cast<Transaction::Exit>(exitCode), runtime);
+    q->files(Package(pid), filenames.split(";"));
+}
+
+void TransactionPrivate::finished(const QString &exitCode, uint runtime)
+{
+    Q_Q(Transaction);
+    int exitValue = Util::enumFromString<Transaction>(exitCode, "Exit", "Exit");
+    q->finished(static_cast<Transaction::Exit>(exitValue), runtime);
 }
 
 void TransactionPrivate::destroy()
 {
     Q_Q(Transaction);
-    if (p) {
-       delete p;
-       p = 0;
-    }
-    q->destroy();
+    q->deleteLater();
 }
 
 void TransactionPrivate::daemonQuit()
 {
     Q_Q(Transaction);
-    if (p) {
-        q->finished(Transaction::ExitFailed, 0);
-        destroy();
-    }
+    q->finished(Transaction::ExitFailed, 0);
+    destroy();
 }
 
-void TransactionPrivate::message(uint type, const QString &message)
+void TransactionPrivate::message(const QString &type, const QString &message)
 {
     Q_Q(Transaction);
-    q->message(static_cast<Transaction::Message>(type), message);
+    q->message(static_cast<Transaction::Message>(Util::enumFromString<Transaction>(type, "Message", "Message")), message);
 }
 
-void TransactionPrivate::Package(uint info, const QString &pid, const QString &summary)
+void TransactionPrivate::package(const QString &info, const QString &pid, const QString &summary)
 {
     Q_Q(Transaction);
-    q->package(static_cast<Transaction::Info>(info),
-               pid,
-               summary);
+    q->package(Package(pid, static_cast<Package::Info>(Util::enumFromString<Package>(info, "Info", "Info")), summary));
 }
 
-void TransactionPrivate::ItemProgress(const QString &itemID, uint status, uint percentage)
-{
-    Q_Q(Transaction);
-    q->itemProgress(itemID,
-                    static_cast<PackageKit::Transaction::Status>(status),
-                    percentage);
-}
-
-void TransactionPrivate::RepoSignatureRequired(const QString &pid,
+void TransactionPrivate::repoSignatureRequired(const QString &pid,
                                                const QString &repoName,
                                                const QString &keyUrl,
                                                const QString &keyUserid,
                                                const QString &keyId,
                                                const QString &keyFingerprint,
                                                const QString &keyTimestamp,
-                                               uint type)
+                                               const QString &type)
 {
     Q_Q(Transaction);
-    q->repoSignatureRequired(pid,
-                             repoName,
-                             keyUrl,
-                             keyUserid,
-                             keyId,
-                             keyFingerprint,
-                             keyTimestamp,
-                             static_cast<Transaction::SigType>(type));
+    Signature i;
+    i.package = Package(pid);
+    i.repoId = repoName;
+    i.keyUrl = keyUrl;
+    i.keyUserid = keyUserid;
+    i.keyId = keyId;
+    i.keyFingerprint = keyFingerprint;
+    i.keyTimestamp = keyTimestamp;
+    i.type = static_cast<Signature::Type>(Util::enumFromString<Signature>(type, "Type", "Signature"));
+
+    q->repoSignatureRequired(i);
 }
 
-void TransactionPrivate::requireRestart(uint type, const QString &pid)
+void TransactionPrivate::requireRestart(const QString &type, const QString &pid)
 {
     Q_Q(Transaction);
-    q->requireRestart(static_cast<PackageKit::Transaction::Restart>(type), pid);
+    q->requireRestart(static_cast<Package::Restart>(Util::enumFromString<Package>(type, "Restart", "Restart")), Package(pid));
 }
 
-void TransactionPrivate::transaction(const QDBusObjectPath &oldTid,
+void TransactionPrivate::transaction(const QString &oldTid,
                                      const QString &timespec,
                                      bool succeeded,
-                                     uint role,
+                                     const QString &role,
                                      uint duration,
                                      const QString &data,
                                      uint uid,
                                      const QString &cmdline)
 {
     Q_Q(Transaction);
-    q->transaction(new Transaction(oldTid, timespec, succeeded, static_cast<Transaction::Role>(role), duration, data, uid, cmdline, q->parent()));
+    q->transaction(new Transaction(oldTid, timespec, succeeded, role, duration, data, uid, cmdline, q->parent()));
 }
 
-void TransactionPrivate::UpdateDetail(const QString &package_id,
-                                      const QStringList &updates,
-                                      const QStringList &obsoletes,
-                                      const QStringList &vendor_urls,
-                                      const QStringList &bugzilla_urls,
-                                      const QStringList &cve_urls,
-                                      uint restart,
-                                      const QString &update_text,
+void TransactionPrivate::updateDetail(const QString &pid,
+                                      const QString &updates,
+                                      const QString &obsoletes,
+                                      const QString &vendorUrl,
+                                      const QString &bugzillaUrl,
+                                      const QString &cveUrl,
+                                      const QString &restart,
+                                      const QString &updateText,
                                       const QString &changelog,
-                                      uint state,
+                                      const QString &state,
                                       const QString &issued,
                                       const QString &updated)
 {
     Q_Q(Transaction);
-    q->updateDetail(package_id,
-                    updates,
-                    obsoletes,
-                    vendor_urls,
-                    bugzilla_urls,
-                    cve_urls,
-                    static_cast<PackageKit::Transaction::Restart>(restart),
-                    update_text,
-                    changelog,
-                    static_cast<PackageKit::Transaction::UpdateState>(state),
-                    QDateTime::fromString(issued, Qt::ISODate),
-                    QDateTime::fromString(updated, Qt::ISODate));
+
+    Package package(pid);
+    if (!updates.isEmpty()) {
+        QList<Package> updatesList;
+        foreach (const QString &pid, updates.split("&")) {
+            updatesList << Package(pid);
+        }
+        package.setUpdates(updatesList);
+    }
+    if( !obsoletes.isEmpty() ) {
+        QList<Package> obsoletesList;
+        foreach (const QString &pid, obsoletes.split("&")) {
+            obsoletesList << Package(pid);
+        }
+        package.setObsoletes(obsoletesList);
+    }
+    package.setVendorUrl(vendorUrl);
+    package.setBugzillaUrl(bugzillaUrl);
+    package.setCveUrl(cveUrl);
+    package.setRestart(static_cast<Package::Restart>(Util::enumFromString<Package>(restart, "Restart", "Restart")));
+    package.setUpdateText(updateText);
+    package.setChangelog(changelog);
+    package.setState(static_cast<Package::UpdateState>(Util::enumFromString<Package>(state, "UpdateState", "UpdateState")));
+    package.setIssued(QDateTime::fromString(issued, Qt::ISODate));
+    package.setUpdated(QDateTime::fromString(updated, Qt::ISODate));
+
+    q->package(package);
 }

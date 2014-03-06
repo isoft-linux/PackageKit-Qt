@@ -1,7 +1,7 @@
 /*
  * This file is part of the QPackageKit project
  * Copyright (C) 2008 Adrien Bustany <madcat@mymadcat.com>
- * Copyright (C) 2010-2012 Daniel Nicoletti <dantti12@gmail.com>
+ * Copyright (C) 2010-2011 Daniel Nicoletti <dantti85-pk@yahoo.com.br>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -23,9 +23,8 @@
 #define PACKAGEKIT_DAEMON_H
 
 #include <QtCore/QObject>
-#include <QtCore/QMetaEnum>
-#include <QtDBus/QDBusError>
 
+#include "package.h"
 #include "transaction.h"
 
 namespace PackageKit {
@@ -33,7 +32,7 @@ namespace PackageKit {
 /**
  * \class Daemon daemon.h Daemon
  * \author Adrien Bustany \e <madcat@mymadcat.com>
- * \author Daniel Nicoletti \e <dantti12@gmail.com>
+ * \author Daniel Nicoletti \e <dantti85-pk@yahoo.com.br>
  *
  * \brief Base class used to interact with the PackageKit daemon
  *
@@ -51,43 +50,29 @@ class Daemon : public QObject
     Q_OBJECT
     Q_ENUMS(Network)
     Q_ENUMS(Authorize)
-    Q_PROPERTY(Transaction::Roles actions READ actions NOTIFY changed)
-    Q_PROPERTY(Transaction::ProvidesFlag provides READ provides NOTIFY changed)
-    Q_PROPERTY(QString backendName READ backendName NOTIFY changed)
-    Q_PROPERTY(QString backendDescription READ backendDescription NOTIFY changed)
-    Q_PROPERTY(QString backendAuthor READ backendAuthor NOTIFY changed)
-    Q_PROPERTY(Transaction::Filters filters READ filters NOTIFY changed)
-    Q_PROPERTY(Transaction::Groups groups READ groups NOTIFY changed)
-    Q_PROPERTY(bool locked READ locked NOTIFY changed)
-    Q_PROPERTY(QStringList mimeTypes READ mimeTypes NOTIFY changed)
-    Q_PROPERTY(Daemon::Network networkState READ networkState NOTIFY changed)
-    Q_PROPERTY(QString distroID READ distroID NOTIFY changed)
-    Q_PROPERTY(uint versionMajor READ versionMajor NOTIFY changed)
-    Q_PROPERTY(uint versionMinor READ versionMinor NOTIFY changed)
-    Q_PROPERTY(uint versionMicro READ versionMicro NOTIFY changed)
 public:
     /**
      * Describes the current network state
      */
-    enum Network {
-        NetworkUnknown,
+    typedef enum {
+        UnknownNetwork,
         NetworkOffline,
         NetworkOnline,
         NetworkWired,
         NetworkWifi,
         NetworkMobile
-    };
+    } Network;
 
     /**
      * Describes the authorization result
      * \sa canAuthorize()
      */
-    enum Authorize {
-        AuthorizeUnknown,
+    typedef enum {
+        UnknownAuthorize,
         AuthorizeYes,
         AuthorizeNo,
         AuthorizeInteractive
-    };
+    } Authorize;
 
     /**
      * \brief Returns an instance of the Daemon
@@ -106,74 +91,54 @@ public:
     /**
      * Returns all the actions supported by the current backend
      */
-    Transaction::Roles actions();
-
-    /**
-     * Returns all the actions supported by the current backend
-     */
-    Transaction::ProvidesFlag provides();
+    static Transaction::Roles actions();
 
     /**
      * The backend name, e.g. "yum".
      */
-    QString backendName();
+    static QString backendName();
 
     /**
      * The backend description, e.g. "Yellow Dog Update Modifier".
      */
-    QString backendDescription();
+    static QString backendDescription();
 
     /**
      * The backend author, e.g. "Joe Bloggs <joe@blogs.com>"
      */
-    QString backendAuthor();
+    static QString backendAuthor();
 
     /**
      * Returns the package filters supported by the current backend
      */
-    Transaction::Filters filters();
+    static Transaction::Filters filters();
 
     /**
      * Returns the package groups supported by the current backend
      */
-    Transaction::Groups groups();
+    static Package::Groups groups();
 
     /**
      * Set when the backend is locked and native tools would fail.
      */
-    bool locked();
+    static bool locked();
 
     /**
      * Returns a list containing the MIME types supported by the current backend
      */
-    QStringList mimeTypes();
+    static QStringList mimeTypes();
 
     /**
      * Returns the current network state
      */
-    Daemon::Network networkState();
+    static Daemon::Network networkState();
 
     /**
      * The distribution identifier in the
      * distro;version;arch form,
      * e.g. "debian;squeeze/sid;x86_64".
      */
-    QString distroID();
-
-    /**
-     * Returns the major version number.
-     */
-    uint versionMajor();
-
-    /**
-     * The minor version number.
-     */
-    uint versionMinor();
-
-    /**
-     * The micro version number.
-     */
-    uint versionMicro();
+    static QString distroId();
 
     /**
      * Allows a client to find out if it would be allowed to authorize an action.
@@ -181,12 +146,12 @@ public:
      * specified in \p actionId
      * Returm might be either yes, no or interactive \sa Authorize.
      */
-    Q_INVOKABLE Authorize canAuthorize(const QString &actionId);
+    static Daemon::Authorize canAuthorize(const QString &actionId);
 
     /**
      * Returns the time (in seconds) since the specified \p action
      */
-    Q_INVOKABLE uint getTimeSinceAction(PackageKit::Transaction::Role action);
+    static uint getTimeSinceAction(Transaction::Role action);
 
     /**
      * \brief creates a new transaction path
@@ -199,12 +164,12 @@ public:
      * is not useful as simply creating a \c Transaction object will
      * automatically create this path.
      */
-    Q_INVOKABLE QDBusObjectPath getTid();
+    static QString getTid();
 
     /**
      * Returns the list of current transactions
      */
-    Q_INVOKABLE QList<QDBusObjectPath> getTransactionList();
+    static QStringList getTransactions();
 
     /**
      * Convenience function
@@ -213,7 +178,7 @@ public:
      * You must delete these yourself or pass a
      * \p parent for these comming transactions
      */
-    Q_INVOKABLE QList<Transaction*> getTransactionObjects(QObject *parent = 0);
+    static QList<Transaction*> getTransactionsObj(QObject *parent = 0);
 
     /**
      * \brief Sets a global hints for all the transactions to be created
@@ -233,141 +198,55 @@ public:
      *
      * \sa Transaction::setHints
      */
-    Q_INVOKABLE void setHints(const QStringList &hints);
+    static void setHints(const QStringList &hints);
 
     /**
      * Convenience function to set global hints
      * \sa setHints(const QStringList &hints)
      */
-    Q_INVOKABLE void setHints(const QString &hints);
+    static void setHints(const QString &hints);
 
     /**
      * This method returns the current hints
      */
-    Q_INVOKABLE QStringList hints();
+    static QStringList hints();
 
     /**
      * Sets a proxy to be used for all the network operations
      */
-    Q_INVOKABLE Transaction::InternalError setProxy(const QString &http_proxy, const QString &https_proxy, const QString &ftp_proxy, const QString &socks_proxy, const QString &no_proxy, const QString &pac);
+    static Transaction::InternalError setProxy(const QString &http_proxy, const QString &ftp_proxy);
+
+    /**
+     * Sets a proxy to be used for all the network operations
+     */
+    static Transaction::InternalError setProxy(const QString &http_proxy, const QString &https_proxy, const QString &ftp_proxy, const QString &socks_proxy, const QString &no_proxy, const QString &pac);
 
     /**
      * \brief Tells the daemon that the system state has changed, to make it reload its cache
      *
      * \p reason can be resume or posttrans
      */
-    Q_INVOKABLE void stateHasChanged(const QString &reason);
+    static void stateHasChanged(const QString &reason);
 
     /**
      * Asks PackageKit to quit, for example to let a native package manager operate
      */
-    Q_INVOKABLE void suggestDaemonQuit();
+    static void suggestDaemonQuit();
 
     /**
-     * Get the last call status
+     * Returns the major version number.
      */
-    Q_INVOKABLE QDBusError lastError() const;
+    static uint versionMajor();
 
     /**
-     * Returns the package name from the \p packageID
+     * The minor version number.
      */
-    Q_INVOKABLE static QString packageName(const QString &packageID);
+    static uint versionMinor();
 
     /**
-     * Returns the package version from the \p packageID
+     * The micro version number.
      */
-    Q_INVOKABLE static QString packageVersion(const QString &packageID);
-
-    /**
-     * Returns the package arch from the \p packageID
-     */
-    Q_INVOKABLE static QString packageArch(const QString &packageID);
-
-    /**
-     * Returns the package data from the \p packageID
-     */
-    Q_INVOKABLE static QString packageData(const QString &packageID);
-
-    /**
-     * Returns the package icon from the \p packageID
-     */
-    Q_INVOKABLE static QString packageIcon(const QString &packageID);
-    
-    /**
-     * Returns the string representing the enum
-     * Useful for PackageDetails::Group
-     */
-    template<class T> static QString enumToString(int value, const char *enumName)
-    {
-        QString prefix = enumName;
-        int id = T::staticMetaObject.indexOfEnumerator(enumName);
-        QMetaEnum e = T::staticMetaObject.enumerator(id);
-        if (!e.isValid ()) {
-//             qDebug() << "Invalid enum " << prefix;
-            return QString();
-        }
-        QString enumString = e.valueToKey(value);
-        if (enumString.isNull()) {
-//             qDebug() << "Enum key not found while searching for value" << QString::number(value) << "in enum" << prefix;
-            return QString();
-        }
-
-        // Remove the prefix
-        if(!prefix.isNull() && enumString.indexOf(prefix) == 0) {
-            enumString.remove(0, prefix.length());
-        }
-
-        QString pkName;
-        for(int i = 0 ; i < enumString.length() - 1 ; ++i) {
-            pkName += enumString[i];
-            if(enumString[i+1].isUpper())
-                pkName += QChar('-');
-        }
-        pkName += enumString[enumString.length() - 1];
-
-        return pkName.toLower();
-    }
-    
-    template<class T> static int enumFromString(const QString &str, const char *enumName)
-    {
-        QString prefix = enumName;
-        QString realName;
-        bool lastWasDash = false;
-        QChar buf;
-
-        for(int i = 0 ; i < str.length() ; ++i) {
-            buf = str[i].toLower();
-            if(i == 0 || lastWasDash) {
-                buf = buf.toUpper();
-            }
-
-            lastWasDash = false;
-            if(buf == QLatin1Char('-')) {
-                lastWasDash = true;
-            } else if(buf == QLatin1Char('~')) {
-                lastWasDash = true;
-                realName += "Not";
-            } else {
-                realName += buf;
-            }
-        };
-
-        if (!prefix.isNull()) {
-            realName = prefix + realName;
-        }
-
-        int id = T::staticMetaObject.indexOfEnumerator(enumName);
-        QMetaEnum e = T::staticMetaObject.enumerator(id);
-        int enumValue = e.keyToValue(realName.toLatin1().data());
-
-        if (enumValue == -1) {
-            enumValue = e.keyToValue(prefix.append("Unknown").toLatin1().data());
-            if (!QString(enumName).isEmpty()) {
-//                 qDebug() << "enumFromString (" << enumName << ") : converted" << str << "to" << QString("Unknown").append(enumName) << ", enum id" << id;
-            }
-        }
-        return enumValue;
-    }
+    static uint versionMicro();
 
 Q_SIGNALS:
     /**
@@ -403,20 +282,6 @@ Q_SIGNALS:
     void daemonQuit();
 
 protected:
-    /**
-     * This method connects to DBus signals
-     * \attention Make sure to call this method in inherited classes
-     * otherwise no signals will be emitted
-     */
-    virtual void connectNotify(const char *signal);
-
-    /**
-     * This method disconnects from DBus signals
-     * \attention Make sure to call this method in inherited classes
-     * otherwise no signals will be disconnected
-     */
-    virtual void disconnectNotify(const char *signal);
-
     DaemonPrivate * const d_ptr;
 
 private:
@@ -427,8 +292,5 @@ private:
 };
 
 } // End namespace PackageKit
-
-Q_DECLARE_METATYPE(PackageKit::Daemon::Network)
-Q_DECLARE_METATYPE(PackageKit::Daemon::Authorize)
 
 #endif

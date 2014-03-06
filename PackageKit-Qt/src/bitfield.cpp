@@ -6,7 +6,7 @@ Bitfield::Bitfield () : m_val (0)
 {
 }
 
-Bitfield::Bitfield (qulonglong val) : m_val (val)
+Bitfield::Bitfield (qint64 val) : m_val (val)
 {
 }
 
@@ -14,25 +14,25 @@ Bitfield::~Bitfield ()
 {
 }
 
-qulonglong Bitfield::operator& (qulonglong mask) const
+qint64 Bitfield::operator& (qint64 mask) const
 {
-	return m_val & (1ULL << mask);
+	return m_val & (1 << mask);
 }
 
-qulonglong Bitfield::operator&= (qulonglong mask)
+qint64 Bitfield::operator&= (qint64 mask)
 {
-	m_val &= (1ULL << mask);
+	m_val &= (1 << mask);
 	return m_val;
 }
 
-qulonglong Bitfield::operator| (qulonglong mask) const
+qint64 Bitfield::operator| (qint64 mask) const
 {
-	return m_val | (1ULL << mask);
+	return m_val | (1 << mask);
 }
 
-qulonglong Bitfield::operator|= (qulonglong mask)
+qint64 Bitfield::operator|= (qint64 mask)
 {
-	m_val |= (1ULL << mask);
+	m_val |= (1 << mask);
 	return m_val;
 }
 

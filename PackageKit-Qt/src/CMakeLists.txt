@@ -1,4 +1,5 @@
 # CMakeLists for PackageKit-Qt library
+# Copyright (C) 2014 Leslie Zhai <xiang.zhai@i-soft.com.cn>
 
 if (USE_QT5)
   find_package(Qt5Core REQUIRED)
@@ -33,23 +34,31 @@ include_directories(${CMAKE_BINARY_DIR}
 set(packagekitqt_HEADERS
     Daemon
     Transaction
-    common.h
+    Package
+    Signature
+    Eula
+    bitfield.h
     daemon.h
     transaction.h
-    bitfield.h
+    package.h
+    signature.h
+    eula.h
 )
 
 set(packagekitqt_HEADERS_PRIVATE
-                daemonprivate.h
-		transactionprivate.h
+    daemonprivate.h
+	transactionprivate.h
 )
 
 set(packagekitqt_SRC
-		bitfield.cpp
-		daemon.cpp
-                daemonprivate.cpp
-		transaction.cpp
-		transactionprivate.cpp
+	bitfield.cpp
+	daemon.cpp
+    daemonprivate.cpp
+	transaction.cpp
+	transactionprivate.cpp
+    eula.cpp
+    package.cpp
+    signature.cpp
 )
 
 find_file(PK_INTERFACE_XML org.freedesktop.PackageKit.xml
@@ -70,7 +79,9 @@ if (Qt5_FOUND)
   qt5_add_dbus_interface(packagekitqt_SRC ${PK_TRANSACTION_INTERFACE_XML} transactionproxy)
   qt5_generate_moc(daemon.h daemon.moc)
   qt5_generate_moc(transaction.h transaction.moc)
-  add_custom_target(mocs DEPENDS daemon.moc transaction.moc)
+  qt5_generate_moc(package.h package.moc)
+  qt5_generate_moc(signature.h signature.moc)
+  add_custom_target(mocs DEPENDS daemon.moc transaction.moc package.moc signature.moc)
 
   set(LIBNAME "packagekit-qt5")
 elseif (Qt4_FOUND)
