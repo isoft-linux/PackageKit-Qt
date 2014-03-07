@@ -50,6 +50,8 @@ private slots:
 static void m_cleanup(int sig) 
 {
     qDebug() << "Bye :)";
+    QObject::disconnect(m_trans, SIGNAL(package(PackageKit::Package)), 
+        m_mys, SLOT(addPackage(PackageKit::Package)));
     if (m_trans) delete m_trans; m_trans = NULL;
     if (m_mys) delete m_mys; m_mys = NULL;
     if (sig == SIGINT) qApp->quit();
@@ -76,21 +78,15 @@ int main(int argc, char *argv[])
         qDebug() << value;
     
     qDebug() << "Daemon::Network enum " << Daemon::networkState();
-   
-    //-------------------------------------------------------------------------
-    // Transaction
-    //-------------------------------------------------------------------------
-    Transaction *trans = new Transaction(Daemon::global());
 
     //-------------------------------------------------------------------------
     // Transaction::search
     //-------------------------------------------------------------------------
+    m_trans = new Transaction(Daemon::global());
     MySearch *m_mys = new MySearch;
-    QObject::connect(trans, 
-        SIGNAL(package(PackageKit::Package)), 
-        m_mys, 
-        SLOT(addPackage(PackageKit::Package)));
-    trans->searchNames(argv[1] ? argv[1] : "qt5");
+    QObject::connect(m_trans, SIGNAL(package(PackageKit::Package)), 
+        m_mys, SLOT(addPackage(PackageKit::Package)));
+    m_trans->searchNames(argv[1] ? argv[1] : "qt5");
 
     //-------------------------------------------------------------------------
     // Transaction::getCategories GetCategories not supported by alpm backend
