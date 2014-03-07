@@ -76,7 +76,7 @@ Daemon::~Daemon()
 
 Transaction::Roles Daemon::actions()
 {
-    QStringList roles = global()->d_ptr->daemon->roles().split(";");
+                QStringList roles = global()->d_ptr->daemon->roles().split(";");
 
     Transaction::Roles flags;
     foreach (const QString &role, roles) {
@@ -87,6 +87,7 @@ Transaction::Roles Daemon::actions()
 
 QString Daemon::backendName()
 {
+    Transaction
     return global()->d_ptr->daemon->backendName();
 }
 
