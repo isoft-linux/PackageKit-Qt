@@ -25,42 +25,37 @@
 
 using namespace PackageKit;
 
-class MySearch;
-
-static Transaction *m_trans = NULL;
-static MySearch *m_mys = NULL;
+class MyTransHandler;
 
 static void m_cleanup(int sig);
 
-class MySearch : public QObject 
+class MyTransHandler : public QObject 
 {
     Q_OBJECT
 
 public:
-    MySearch(QObject *parent = 0) {}
-    ~MySearch() {}
+    MyTransHandler(QObject *parent = 0) {}
+    ~MyTransHandler() {}
 
 private slots:
-    void addPackage(PackageKit::Package package) 
+    void package(PackageKit::Package package) 
     {
-        qDebug() << package.name();
+        QString strUSP = "/usr/share/pixmaps/";
+        QString strUSI = "/usr/share/icons/hicolor/256x256/";
+        qDebug() << package.id() << package.iconPath() << package.name() << package.version() << package.size() << package.description();
     }
 };
 
 static void m_cleanup(int sig) 
 {
     qDebug() << "Bye :)";
-    QObject::disconnect(m_trans, SIGNAL(package(PackageKit::Package)), 
-        m_mys, SLOT(addPackage(PackageKit::Package)));
-    if (m_trans) delete m_trans; m_trans = NULL;
-    if (m_mys) delete m_mys; m_mys = NULL;
     if (sig == SIGINT) qApp->quit();
 }
 
 int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
-    signal(SIGINT, m_cleanup);
+    //signal(SIGINT, m_cleanup);
 
     //-------------------------------------------------------------------------
     // Daemon
@@ -82,15 +77,37 @@ int main(int argc, char *argv[])
     //-------------------------------------------------------------------------
     // Transaction::search
     //-------------------------------------------------------------------------
-    m_trans = new Transaction(Daemon::global());
-    MySearch *m_mys = new MySearch;
-    QObject::connect(m_trans, SIGNAL(package(PackageKit::Package)), 
-        m_mys, SLOT(addPackage(PackageKit::Package)));
-    m_trans->searchNames(argv[1] ? argv[1] : "qt5");
+    Transaction *tranSearch = new Transaction(Daemon::global());
+    MyTransHandler *mySearch = new MyTransHandler;
+    QObject::connect(tranSearch, SIGNAL(package(PackageKit::Package)), 
+        mySearch, SLOT(package(PackageKit::Package)));
+    tranSearch->searchNames(argv[1] ? argv[1] : "qt5");
 
     //-------------------------------------------------------------------------
-    // Transaction::getCategories GetCategories not supported by alpm backend
+    // Transaction::get-updates
     //-------------------------------------------------------------------------
+    Transaction *tranGetUpdate = new Transaction(Daemon::global());
+    MyTransHandler *myGetUpdate = new MyTransHandler;
+    QObject::connect(tranGetUpdate, SIGNAL(package(PackageKit::Package)), 
+        myGetUpdate, SLOT(package(PackageKit::Package)));
+    tranGetUpdate->getUpdates();
+
+    //-------------------------------------------------------------------------
+    // Transaction::update 
+    // there are percentage, elapsedTime, remainingTime, speed properties
+    //-------------------------------------------------------------------------
+    Transaction *tranUpdatePackage = new Transaction(Daemon::global());
+    Package pkg1("apper;0.7.2-6;x86_64;community");
+    qDebug() << pkg1.name() << pkg1.version();
+    tranUpdatePackage->updatePackage(pkg1);
+
+    //-------------------------------------------------------------------------
+    // Transaction::remove
+    //-------------------------------------------------------------------------
+    Transaction *tranRemovePackage = new Transaction(Daemon::global());
+    Package pkg2("libreoffice-writer;4.1.4-4;x86_64;installed");
+    qDebug() << pkg2.name() << pkg2.version();
+    tranRemovePackage->removePackage(pkg2);
 
     return a.exec();
 }
