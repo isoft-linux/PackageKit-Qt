@@ -42,7 +42,7 @@ private slots:
     {
         QString strUSP = "/usr/share/pixmaps/";
         QString strUSI = "/usr/share/icons/hicolor/256x256/";
-        qDebug() << package.id() << package.iconPath() << package.name() << package.version() << package.size() << package.description();
+        qDebug() << package.id() << package.iconPath() << package.name() << package.summary() << package.version() << package.size();
     }
 };
 
@@ -63,6 +63,9 @@ int main(int argc, char *argv[])
     qDebug() << Daemon::backendName();
     qDebug() << Daemon::backendAuthor();
     qDebug() << Daemon::distroId();
+   
+    Transaction::Filters filters = Daemon::filters();
+    qDebug() << "Transaction::Filters enum " << filters;
     
     Package::Groups groups = Daemon::groups();
     foreach (const Package::Group &value, groups) 
@@ -81,7 +84,9 @@ int main(int argc, char *argv[])
     MyTransHandler *mySearch = new MyTransHandler;
     QObject::connect(tranSearch, SIGNAL(package(PackageKit::Package)), 
         mySearch, SLOT(package(PackageKit::Package)));
-    tranSearch->searchNames(argv[1] ? argv[1] : "qt5");
+    tranSearch->searchNames(argv[1] ? argv[1] : "qt5", Transaction::FilterInstalled);
+
+    return a.exec();
 
     //-------------------------------------------------------------------------
     // Transaction::get-updates
