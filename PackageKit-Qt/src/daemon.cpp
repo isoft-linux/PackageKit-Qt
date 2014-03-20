@@ -87,7 +87,6 @@ Transaction::Roles Daemon::actions()
 
 QString Daemon::backendName()
 {
-    Transaction
     return global()->d_ptr->daemon->backendName();
 }
 
