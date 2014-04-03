@@ -1,8 +1,9 @@
 # PackageKit-Qt
 
-PackageKit Qt Binding
+Qt5 bindings for PackageKit
 
-## build && install
+
+## Install
 
 ```
 cd PackageKit-Qt/
@@ -13,12 +14,19 @@ make
 sudo make install
 ```
 
+
 ## pkg-config
 
 ```
 pkg-config --cflags --libs packagekit-qt5 
 ```
 
+
 ## migration
 
-migrated from PackageKit-0.7.6/lib/packagekit-qt2 to Qt5.2.x
+port PackageKit-0.7.6/lib/packagekit-qt2 to Qt5.2.x
+
+
+## Upstream
+
+https://gitorious.org/packagekit/packagekit-qt

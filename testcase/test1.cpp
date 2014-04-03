@@ -17,104 +17,93 @@
 
 #include <QObject>
 #include <QCoreApplication>
-#include <QTimer>
 #include <QDebug>
 #include <QStringList>
+#include <QThread>
 #include <Daemon>
-#include <signal.h>
 
 using namespace PackageKit;
 
-class MyTransHandler;
-
-static void m_cleanup(int sig);
-
-class MyTransHandler : public QObject 
+class SearchWorker : public QObject
 {
     Q_OBJECT
 
 public:
-    MyTransHandler(QObject *parent = 0) {}
-    ~MyTransHandler() {}
+    SearchWorker(QString pkName, QObject *parent = 0) : QObject(parent), m_pkt(NULL) 
+    {
+        m_pkt = new Transaction;
+        connect(m_pkt, &Transaction::package, this, &SearchWorker::package);
+        connect(m_pkt, &Transaction::finished, this, &SearchWorker::finished);
+        m_pkt->searchNames(pkName);
+    }
 
 private slots:
-    void package(PackageKit::Package package) 
+    void errorCode(Transaction::Error error, const QString &details) 
     {
-        QString strUSP = "/usr/share/pixmaps/";
-        QString strUSI = "/usr/share/icons/hicolor/256x256/";
-        qDebug() << package.id() << package.iconPath() << package.name() << package.summary() << package.version() << package.size();
+        qDebug() << "DEBUG: " << error << details; 
     }
+    
+    void finished(Transaction::Exit status, uint runtime) 
+    {
+        if (!m_pkt) return;
+        disconnect(m_pkt, &Transaction::package, this, &SearchWorker::package);
+        disconnect(m_pkt, &Transaction::finished, this, &SearchWorker::finished);
+        delete m_pkt; m_pkt = NULL;
+    }
+
+    void package(Package pk) 
+    {
+        qDebug() << "DEBUG: " << pk.id() << pk.name() << pk.summary() << 
+            pk.version() << pk.iconPath() << pk.size();
+    }
+
+private:
+    PackageKit::Transaction *m_pkt;
 };
 
-static void m_cleanup(int sig) 
+class SearchThread : public QThread 
 {
-    qDebug() << "Bye :)";
-    if (sig == SIGINT) qApp->quit();
-}
+    Q_OBJECT
+
+public:
+    SearchThread(QString pkName) : m_sw(NULL), m_pkName(pkName) {}
+    ~SearchThread() { if (m_sw) delete m_sw; m_sw = NULL; }
+
+protected:
+    void run() { m_sw = new SearchWorker(m_pkName); }
+
+private:
+    SearchWorker *m_sw;
+    QString m_pkName;
+};
 
 int main(int argc, char *argv[])
 {
-    QCoreApplication a(argc, argv);
-    //signal(SIGINT, m_cleanup);
+    QCoreApplication app(argc, argv);
 
     //-------------------------------------------------------------------------
     // Daemon
     //-------------------------------------------------------------------------
-    qDebug() << Daemon::backendName();
-    qDebug() << Daemon::backendAuthor();
-    qDebug() << Daemon::distroId();
+    qDebug() << "DEBUG: " << Daemon::backendName();
+    qDebug() << "DEBUG: " << Daemon::backendAuthor();
+    qDebug() << "DEBUG: " << Daemon::distroId();
    
     Transaction::Filters filters = Daemon::filters();
-    qDebug() << "Transaction::Filters enum " << filters;
+    qDebug() << "DEBUG: " << "Transaction::Filters enum " << filters;
     
     Package::Groups groups = Daemon::groups();
     foreach (const Package::Group &value, groups) 
-        qDebug() << "Package::Group enum " << value;
+        qDebug() << "DEBUG: " << "Package::Group enum " << value;
     
     QStringList mimeTypes = Daemon::mimeTypes();
     foreach (const QString &value, mimeTypes) 
-        qDebug() << value;
+        qDebug() << "DEBUG: " << value;
     
-    qDebug() << "Daemon::Network enum " << Daemon::networkState();
+    qDebug() << "DEBUG: " << "Daemon::Network enum " << Daemon::networkState();
 
-    //-------------------------------------------------------------------------
-    // Transaction::search
-    //-------------------------------------------------------------------------
-    Transaction *tranSearch = new Transaction(Daemon::global());
-    MyTransHandler *mySearch = new MyTransHandler;
-    QObject::connect(tranSearch, SIGNAL(package(PackageKit::Package)), 
-        mySearch, SLOT(package(PackageKit::Package)));
-    tranSearch->searchNames(argv[1] ? argv[1] : "qt5", Transaction::FilterInstalled);
+    SearchWorker sw("qt5");
 
-    return a.exec();
-
-    //-------------------------------------------------------------------------
-    // Transaction::get-updates
-    //-------------------------------------------------------------------------
-    Transaction *tranGetUpdate = new Transaction(Daemon::global());
-    MyTransHandler *myGetUpdate = new MyTransHandler;
-    QObject::connect(tranGetUpdate, SIGNAL(package(PackageKit::Package)), 
-        myGetUpdate, SLOT(package(PackageKit::Package)));
-    tranGetUpdate->getUpdates();
-
-    //-------------------------------------------------------------------------
-    // Transaction::update 
-    // there are percentage, elapsedTime, remainingTime, speed properties
-    //-------------------------------------------------------------------------
-    Transaction *tranUpdatePackage = new Transaction(Daemon::global());
-    Package pkg1("apper;0.7.2-6;x86_64;community");
-    qDebug() << pkg1.name() << pkg1.version();
-    tranUpdatePackage->updatePackage(pkg1);
-
-    //-------------------------------------------------------------------------
-    // Transaction::remove
-    //-------------------------------------------------------------------------
-    Transaction *tranRemovePackage = new Transaction(Daemon::global());
-    Package pkg2("libreoffice-writer;4.1.4-4;x86_64;installed");
-    qDebug() << pkg2.name() << pkg2.version();
-    tranRemovePackage->removePackage(pkg2);
-
-    return a.exec();
+    return app.exec();
 }
 
 #include "test1.moc"
