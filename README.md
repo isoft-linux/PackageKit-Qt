@@ -1,15 +1,16 @@
 # PackageKit-Qt
 
-Qt5 bindings for PackageKit
+Qt5 bindings for PackageKit, but it still supports Qt4
 
 
-## Install
+## Build && Install
 
 ```
 cd PackageKit-Qt/
 mkdir -p build
 cd build
 cmake ..
+'''but for Qt4 cmake -DUSE_QT5=OFF ..'''
 make
 sudo make install
 ```
