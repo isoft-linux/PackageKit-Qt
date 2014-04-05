@@ -1,33 +1,35 @@
 # PackageKit-Qt
 
-Qt5 bindings for PackageKit, but it still supports Qt4
+Qt5 bindings for PackageKit, as an extension to the original PackageKit-Qt2 (actually using Qt4, don't be fooled 233)
 
 
-## Build && Install
+## Build & Install
 
 ```
-cd PackageKit-Qt/
-mkdir -p build
-cd build
-cmake ..
-'''but for Qt4 cmake -DUSE_QT5=OFF ..'''
-make
-sudo make install
+$ cd PackageKit-Qt/
+$ mkdir -p build
+$ cd build
+$ cmake ..
+
+(but for Qt4 version please use cmake -DUSE_QT5=OFF .. here)
+
+$ make
+#  make install
 ```
 
 
-## pkg-config
+## To Get pkg-config Information
 
 ```
 pkg-config --cflags --libs packagekit-qt5 
 ```
 
 
-## migration
+## Migration
 
-port PackageKit-0.7.6/lib/packagekit-qt2 to Qt5.2.x
+A port PackageKit-0.7.6/lib/packagekit-qt2 to Qt version 5.2.x.
 
 
-## Upstream
+## Upstream URL
 
 https://gitorious.org/packagekit/packagekit-qt
