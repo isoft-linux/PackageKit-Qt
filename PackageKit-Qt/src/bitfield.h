@@ -9,13 +9,13 @@ class Bitfield
 {
 public:
     Bitfield ();
-    Bitfield (qint64 val);
+    Bitfield (qulonglong val);
     ~Bitfield ();
 
-    qint64 operator& (qint64 mask) const;
-    qint64 operator&= (qint64 mask);
-    qint64 operator| (qint64 mask) const;
-    qint64 operator|= (qint64 mask);
+    qulonglong operator& (qulonglong mask) const;
+    qulonglong operator&= (qulonglong mask);
+    qulonglong operator| (qulonglong mask) const;
+    qulonglong operator|= (qulonglong mask);
 
     Bitfield operator& (Bitfield mask) const;
     Bitfield operator&= (Bitfield mask);
@@ -25,7 +25,7 @@ public:
     Bitfield& operator= (const Bitfield& other);
 
 private:
-    qint64 m_val;
+    qulonglong m_val;
 };
 
 } // End namespace PackageKit

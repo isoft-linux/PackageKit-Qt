@@ -34,37 +34,23 @@ include_directories(${CMAKE_BINARY_DIR}
 set(packagekitqt_HEADERS
     Daemon
     Transaction
-    Package
-    Signature
-    Eula
-    bitfield.h
+    common.h
     daemon.h
     transaction.h
-    package.h
-    signature.h
-    eula.h
+    bitfield.h
 )
 
 set(packagekitqt_HEADERS_PRIVATE
     daemonprivate.h
-    daemonproxy.h
     transactionprivate.h
-    transactionproxy.h
-    util.h
 )
 
 set(packagekitqt_SRC
 	bitfield.cpp
 	daemon.cpp
     daemonprivate.cpp
-    daemonproxy.cpp
 	transaction.cpp
 	transactionprivate.cpp
-    transactionproxy.cpp
-    eula.cpp
-    package.cpp
-    signature.cpp
-    util.cpp
 )
 
 find_file(PK_INTERFACE_XML org.freedesktop.PackageKit.xml
@@ -85,9 +71,8 @@ if (Qt5_FOUND)
   qt5_add_dbus_interface(packagekitqt_SRC ${PK_TRANSACTION_INTERFACE_XML} transactionproxy)
   qt5_generate_moc(daemon.h daemon.moc)
   qt5_generate_moc(transaction.h transaction.moc)
-  qt5_generate_moc(package.h package.moc)
-  qt5_generate_moc(signature.h signature.moc)
-  add_custom_target(mocs DEPENDS daemon.moc transaction.moc package.moc signature.moc)
+  add_custom_target(mocs DEPENDS daemon.moc transaction.moc)
+  qt5_wrap_cpp(packagekitqt_MOC_SRC ${packagekitqt_HEADERS} ${packagekitqt_HEADERS_PRIVATE})
 
   set(LIBNAME "packagekit-qt5")
 elseif (Qt4_FOUND)

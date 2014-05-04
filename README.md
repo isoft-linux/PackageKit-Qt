@@ -28,7 +28,7 @@ pkg-config --cflags --libs packagekit-qt5
 
 ## Migration
 
-A port PackageKit-0.7.6/lib/packagekit-qt2 to Qt version 5.2.x.
+A port PackageKit-0.8.8/lib/packagekit-qt2 to Qt version 5.2.x.
 
 
 ## Upstream URL

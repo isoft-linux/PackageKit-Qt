@@ -22,8 +22,9 @@
 #ifndef PACKAGEKIT_TRANSACTION_PRIVATE_H
 #define PACKAGEKIT_TRANSACTION_PRIVATE_H
 
-#include <QtCore/QString>
-#include <QtCore/QHash>
+#include <QString>
+#include <QHash>
+#include <QStringList>
 
 #include "transaction.h"
 
@@ -36,16 +37,14 @@ class TransactionPrivate
     Q_DECLARE_PUBLIC(Transaction)
 protected:
     TransactionPrivate(Transaction *parent);
-    virtual ~TransactionPrivate() {};
+    virtual ~TransactionPrivate() {}
 
-    static QString filtersToString(const QFlags<PackageKit::Transaction::Filter> &flags);
-
-    QString tid;
+    QDBusObjectPath tid;
     ::TransactionProxy* p;
     Transaction *q_ptr;
+    QStringList connectedSignals;
 
     // Only used for old transactions
-    bool oldtrans;
     QDateTime timespec;
     Transaction::Role role;
     bool succeeded;
@@ -53,25 +52,32 @@ protected:
     QString data;
     uint uid;
     QString cmdline;
-    // used for both old and destroyed transactions
-    bool destroyed;
 
     Transaction::InternalError error;
+    QString errorMessage;
+
+    void setupSignal(const QString &signal, bool connect);
 
 protected Q_SLOTS:
-    void details(const QString &pid, const QString &license, const QString &group, const QString &detail, const QString &url, qulonglong size);
-    void distroUpgrade(const QString &type, const QString &name, const QString &description);
-    void errorCode(const QString &error, const QString &details);
-    void eulaRequired(const QString &eulaId, const QString &pid, const QString& vendor, const QString& licenseAgreement);
-    void mediaChangeRequired(const QString& mediaType, const QString& mediaId, const QString& mediaText);
-    void files(const QString& pid, const QString& filenames);
-    void finished(const QString& exitCode, uint runtime);
-    void message(const QString& type, const QString& message);
-    void package(const QString& info, const QString& pid, const QString& summary);
-    void repoSignatureRequired(const QString& pid, const QString& repoName, const QString& keyUrl, const QString& keyUserid, const QString& keyId, const QString& keyFingerprint, const QString& keyTimestamp, const QString& type);
-    void requireRestart(const QString& type, const QString& pid);
-    void transaction(const QString& oldTid, const QString& timespec, bool succeeded, const QString& role, uint duration, const QString& data, uint uid, const QString& cmdline);
-    void updateDetail(const QString& pid, const QString& updates, const QString& obsoletes, const QString& vendorUrl, const QString& bugzillaUrl, const QString& cveUrl, const QString& restart, const QString& updateText, const QString& changelog, const QString& state, const QString& issued, const QString& updated);
+    void Details(const QString &pid, const QString &license, uint group, const QString &detail, const QString &url, qulonglong size);
+    void distroUpgrade(uint type, const QString &name, const QString &description);
+    void errorCode(uint error, const QString &details);
+    void mediaChangeRequired(uint mediaType, const QString &mediaId, const QString &mediaText);
+    void finished(uint exitCode, uint runtime);
+    void message(uint type, const QString &message);
+    void Package(uint info, const QString &pid, const QString &summary);
+    void ItemProgress(const QString &itemID, uint status, uint percentage);
+    void RepoSignatureRequired(const QString &pid,
+                               const QString &repoName,
+                               const QString &keyUrl,
+                               const QString &keyUserid,
+                               const QString &keyId,
+                               const QString &keyFingerprint,
+                               const QString &keyTimestamp,
+                               uint type);
+    void requireRestart(uint type, const QString &pid);
+    void transaction(const QDBusObjectPath &oldTid, const QString &timespec, bool succeeded, uint role, uint duration, const QString &data, uint uid, const QString &cmdline);
+    void UpdateDetail(const QString &package_id, const QStringList &updates, const QStringList &obsoletes, const QStringList &vendor_urls, const QStringList &bugzilla_urls, const QStringList &cve_urls, uint restart, const QString &update_text, const QString &changelog, uint state, const QString &issued, const QString &updated);
     void destroy();
     void daemonQuit();
 };
