@@ -107,9 +107,7 @@ void TransactionPrivate::message(uint type, const QString &message)
 void TransactionPrivate::Package(uint info, const QString &pid, const QString &summary)
 {
     Q_Q(Transaction);
-    q->package(static_cast<Transaction::Info>(info),
-               pid,
-               summary);
+    q->package(static_cast<Transaction::Info>(info), pid, summary);
 }
 
 void TransactionPrivate::ItemProgress(const QString &itemID, uint status, uint percentage)

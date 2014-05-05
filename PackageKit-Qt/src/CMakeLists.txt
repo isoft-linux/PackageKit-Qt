@@ -72,7 +72,6 @@ if (Qt5_FOUND)
   qt5_generate_moc(daemon.h daemon.moc)
   qt5_generate_moc(transaction.h transaction.moc)
   add_custom_target(mocs DEPENDS daemon.moc transaction.moc)
-  qt5_wrap_cpp(packagekitqt_MOC_SRC ${packagekitqt_HEADERS} ${packagekitqt_HEADERS_PRIVATE})
 
   set(LIBNAME "packagekit-qt5")
 elseif (Qt4_FOUND)

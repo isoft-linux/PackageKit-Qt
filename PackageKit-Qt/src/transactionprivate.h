@@ -42,7 +42,11 @@ protected:
     QDBusObjectPath tid;
     ::TransactionProxy* p;
     Transaction *q_ptr;
+#if QT_VERSION >= 0x050000
+    QList<QMetaMethod> connectedSignals;
+#else
     QStringList connectedSignals;
+#endif
 
     // Only used for old transactions
     QDateTime timespec;
@@ -56,6 +60,9 @@ protected:
     Transaction::InternalError error;
     QString errorMessage;
 
+#if QT_VERSION >= 0x050000
+    void setupSignal(const QMetaMethod & signal, bool connect);
+#endif
     void setupSignal(const QString &signal, bool connect);
 
 protected Q_SLOTS:

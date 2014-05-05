@@ -57,6 +57,27 @@ Transaction::Transaction(const QDBusObjectPath &tid, QObject *parent) :
     init(tid);
 }
 
+#if QT_VERSION >= 0x050000
+void Transaction::connectNotify(const QMetaMethod & signal) 
+{
+    Q_D(Transaction);
+    if (!d->connectedSignals.contains(signal) && d->p) {
+        d->setupSignal(signal, true);
+    }
+    d->connectedSignals << signal;
+}
+
+void Transaction::disconnectNotify(const QMetaMethod & signal)                             
+{                                                                                  
+    Q_D(Transaction);                                                              
+    if (d->connectedSignals.contains(signal)) {                                    
+        d->connectedSignals.removeOne(signal);                                     
+        if (d->p && !d->connectedSignals.contains(signal)) {                       
+            d->setupSignal(signal, false);                                         
+        }                                                                          
+    }                                                                              
+}
+#else
 void Transaction::connectNotify(const char *signal)
 {
     Q_D(Transaction);
@@ -76,6 +97,78 @@ void Transaction::disconnectNotify(const char *signal)
         }
     }
 }
+#endif
+
+#if QT_VERSION >= 0x050000
+void TransactionPrivate::setupSignal(const QMetaMethod & signal, bool connect)
+{
+    Q_Q(Transaction);
+
+    const char *signalToConnect = 0;
+    const char *memberToConnect = 0;
+
+    if (signal == QMetaMethod::fromSignal(&Transaction::changed)) {
+        signalToConnect = SIGNAL(Changed());
+        memberToConnect = SIGNAL(changed());
+    } else if (signal == QMetaMethod::fromSignal(&Transaction::category)) {
+        signalToConnect = SIGNAL(Category(QString,QString,QString,QString,QString));
+        memberToConnect = SIGNAL(category(QString,QString,QString,QString,QString));
+    } else if (signal == QMetaMethod::fromSignal(&Transaction::details)) {
+        signalToConnect = SIGNAL(Details(QString,QString,uint,QString,QString,qulonglong));
+        memberToConnect = SLOT(Details(QString,QString,uint,QString,QString,qulonglong));
+    } else if (signal == QMetaMethod::fromSignal(&Transaction::distroUpgrade)) {
+        signalToConnect = SIGNAL(DistroUpgrade(uint,QString,QString));
+        memberToConnect = SLOT(distroUpgrade(uint,QString,QString));
+    } else if (signal == QMetaMethod::fromSignal(&Transaction::errorCode)) {
+        signalToConnect = SIGNAL(ErrorCode(uint,QString));
+        memberToConnect = SLOT(errorCode(uint,QString));
+    } else if (signal == QMetaMethod::fromSignal(&Transaction::files)) {
+        signalToConnect = SIGNAL(Files(QString,QStringList));
+        memberToConnect = SIGNAL(files(QString,QStringList));
+    } else if (signal == QMetaMethod::fromSignal(&Transaction::finished)) {
+        signalToConnect = SIGNAL(Finished(uint,uint));
+        memberToConnect = SLOT(finished(uint,uint));
+    } else if (signal == QMetaMethod::fromSignal(&Transaction::message)) {
+        signalToConnect = SIGNAL(Message(uint,QString));
+        memberToConnect = SLOT(message(uint,QString));
+    } else if (signal == QMetaMethod::fromSignal(&Transaction::package)) {
+        signalToConnect = SIGNAL(Package(uint,QString,QString));
+        memberToConnect = SLOT(Package(uint,QString,QString));
+    } else if (signal == QMetaMethod::fromSignal(&Transaction::repoDetail)) {
+        signalToConnect = SIGNAL(RepoDetail(QString,QString,bool));
+        memberToConnect = SIGNAL(repoDetail(QString,QString,bool));
+    } /* TODO: for saving keyboard */else if (signal.name() == "repoSignatureRequired") {
+        signalToConnect = SIGNAL(RepoSignatureRequired(QString,QString,QString,QString,QString,QString,QString,uint));
+        memberToConnect = SLOT(RepoSignatureRequired(QString,QString,QString,QString,QString,QString,QString,uint));
+    } else if (signal == QMetaMethod::fromSignal(&Transaction::eulaRequired)) {
+        signalToConnect = SIGNAL(EulaRequired(QString,QString,QString,QString));
+        memberToConnect = SIGNAL(eulaRequired(QString,QString,QString,QString));
+    } else if (signal == QMetaMethod::fromSignal(&Transaction::mediaChangeRequired)) {
+        signalToConnect = SIGNAL(MediaChangeRequired(uint,QString,QString));
+        memberToConnect = SLOT(mediaChangeRequired(uint,QString,QString));
+    } else if (signal == QMetaMethod::fromSignal(&Transaction::itemProgress)) {
+        signalToConnect = SIGNAL(ItemProgress(QString,uint,uint));
+        memberToConnect = SLOT(ItemProgress(QString,uint,uint));
+    } else if (signal == QMetaMethod::fromSignal(&Transaction::requireRestart)) {
+        signalToConnect = SIGNAL(RequireRestart(uint,QString));
+        memberToConnect = SLOT(requireRestart(uint,QString));
+    } else if (signal == QMetaMethod::fromSignal(&Transaction::transaction)) {
+        signalToConnect = SIGNAL(Transaction(QDBusObjectPath,QString,bool,uint,uint,QString,uint,QString));
+        memberToConnect = SLOT(transaction(QDBusObjectPath,QString,bool,uint,uint,QString,uint,QString));
+    }/* else if (signal == QMetaMethod::fromSignal(&Transaction::updateDetail)) {
+        signalToConnect = SIGNAL(UpdateDetail(QString,QStringList,QStringList,QStringList,QStringList,QStringList,uint,QString,QString,uint,QString,QString));
+        memberToConnect = SLOT(UpdateDetail(QString,QStringList,QStringList,QStringList,QStringList,QStringList,uint,QString,QString,uint,QString,QString));
+    }*/
+
+    if (signalToConnect && memberToConnect) {
+        if (connect) {
+            q->connect(p, signalToConnect, memberToConnect);
+        } else {
+            p->disconnect(signalToConnect, q, memberToConnect);
+        }
+    }
+}
+#endif
 
 void TransactionPrivate::setupSignal(const QString &signal, bool connect)
 {
@@ -180,11 +273,19 @@ bool Transaction::init(const QDBusObjectPath &tid)
     connect(d->p, SIGNAL(Destroy()),
             SLOT(destroy()));
 
+#if QT_VERSION >= 0x050000
+    QList<QMetaMethod> currentSignals = d->connectedSignals;
+    //currentSignals.removeDuplicates();
+    foreach (const QMetaMethod & signal, currentSignals) {
+        d->setupSignal(signal, true);
+    }
+#else
     QStringList currentSignals = d->connectedSignals;
     currentSignals.removeDuplicates();
     foreach (const QString &signal, currentSignals) {
         d->setupSignal(signal, true);
     }
+#endif
     return true;
 }
 

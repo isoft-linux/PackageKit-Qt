@@ -31,34 +31,62 @@ class SearchWorker : public QObject
 public:
     SearchWorker(QString pkName, QObject *parent = 0) : QObject(parent), m_pkt(NULL) 
     {
-        m_pkt = new Transaction;
-        connect(m_pkt, &Transaction::package, this, &SearchWorker::package);
-        connect(m_pkt, &Transaction::finished, this, &SearchWorker::finished);
+        m_pkt = new Transaction(this);
+        connect(m_pkt, 
+            SIGNAL(package(PackageKit::Transaction::Info, QString, QString)), 
+            this, 
+            SLOT(package(PackageKit::Transaction::Info, QString, QString)));
+        connect(m_pkt, 
+            SIGNAL(finished(PackageKit::Transaction::Exit, uint)), 
+            this, 
+            SLOT(finished(PackageKit::Transaction::Exit, uint)));
+        connect(m_pkt, 
+            SIGNAL(errorCode(PackageKit::Transaction::Error, QString)), 
+            this, 
+            SLOT(errorCode(PackageKit::Transaction::Error, QString)));
         m_pkt->searchNames(pkName);
     }
-
-private slots:
-    void errorCode(Transaction::Error error, const QString &details) 
-    {
-        qDebug() << "DEBUG: " << error << details; 
-    }
-    
-    void finished(Transaction::Exit status, uint runtime) 
+    ~SearchWorker() 
     {
         if (!m_pkt) return;
-        disconnect(m_pkt, &Transaction::package, this, &SearchWorker::package);
-        disconnect(m_pkt, &Transaction::finished, this, &SearchWorker::finished);
+        disconnect(m_pkt, 
+            SIGNAL(package(PackageKit::Transaction::Info, QString, QString)), 
+            this, 
+            SLOT(package(PackageKit::Transaction::Info, QString, QString)));
+        disconnect(m_pkt, 
+            SIGNAL(finished(PackageKit::Transaction::Exit, uint)),   
+            this, 
+            SLOT(finished(PackageKit::Transaction::Exit, uint)));            
+        disconnect(m_pkt, 
+            SIGNAL(errorCode(PackageKit::Transaction::Error, QString)), 
+            this, 
+            SLOT(errorCode(PackageKit::Transaction::Error, QString)));
         delete m_pkt; m_pkt = NULL;
     }
 
-    void package(Package pk) 
+private slots:
+    void errorCode(PackageKit::Transaction::Error error, const QString &details) 
     {
-        qDebug() << "DEBUG: " << pk.id() << pk.name() << pk.summary() << 
-            pk.version() << pk.iconPath() << pk.size();
+        qDebug() << "DEBUG: " << __PRETTY_FUNCTION__ << error << details; 
+    }
+    
+    void finished(PackageKit::Transaction::Exit status, uint runtime) 
+    {
+        qDebug() << "DEBUG: " << __PRETTY_FUNCTION__ << status << runtime;
+    }
+
+    void package(PackageKit::Transaction::Info info, 
+                 const QString &packageID, 
+                 const QString &summary) 
+    {
+        qDebug() << "DEBUG: " << __PRETTY_FUNCTION__ << packageID << 
+            Transaction::packageName(packageID) << summary << 
+            Transaction::packageVersion(packageID) << 
+            Transaction::packageIcon(packageID);
     }
 
 private:
-    PackageKit::Transaction *m_pkt;
+    Transaction *m_pkt;
 };
 
 class SearchThread : public QThread 
@@ -81,25 +109,9 @@ int main(int argc, char *argv[])
 {
     QCoreApplication app(argc, argv);
 
-    //-------------------------------------------------------------------------
-    // Daemon
-    //-------------------------------------------------------------------------
-    qDebug() << "DEBUG: " << Daemon::backendName();
-    qDebug() << "DEBUG: " << Daemon::backendAuthor();
-    qDebug() << "DEBUG: " << Daemon::distroId();
-   
-    Transaction::Filters filters = Daemon::filters();
-    qDebug() << "DEBUG: " << "Transaction::Filters enum " << filters;
-    
-    Package::Groups groups = Daemon::groups();
-    foreach (const Package::Group &value, groups) 
-        qDebug() << "DEBUG: " << "Package::Group enum " << value;
-    
-    QStringList mimeTypes = Daemon::mimeTypes();
-    foreach (const QString &value, mimeTypes) 
-        qDebug() << "DEBUG: " << value;
-    
-    qDebug() << "DEBUG: " << "Daemon::Network enum " << Daemon::networkState();
+    qDebug() << "DEBUG: " << Daemon::global()->backendName();
+    qDebug() << "DEBUG: " << Daemon::global()->backendAuthor();
+    qDebug() << "DEBUG: " << Daemon::global()->distroID();
 
     SearchWorker sw("qt5");
 

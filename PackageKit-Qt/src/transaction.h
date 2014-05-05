@@ -1352,14 +1352,22 @@ protected:
      * \attention Make sure to call this method in inherited classes
      * otherwise no signals will be emitted
      */
+#if QT_VERSION >= 0x050000
+    virtual void connectNotify(const QMetaMethod & signal);
+#else
     virtual void connectNotify(const char *signal);
+#endif
 
     /**
      * This method disconnects from DBus signals
      * \attention Make sure to call this method in inherited classes
      * otherwise no signals will be disconnected
      */
+#if QT_VERSION >= 0x050000
+    virtual void disconnectNotify(const QMetaMethod & signal);
+#else
     virtual void disconnectNotify(const char *signal);
+#endif
 
     TransactionPrivate * const d_ptr;
 

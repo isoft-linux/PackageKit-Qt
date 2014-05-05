@@ -20,7 +20,6 @@
 */
 
 #include <QtSql>
-#include <QDebug>
 
 #include "daemon.h"
 #include "daemonprivate.h"
@@ -124,6 +123,7 @@ void DaemonPrivate::setupSignal(const QString &signal, bool connect)
 void Daemon::connectNotify(const char *signal)
 {
     Q_D(Daemon);
+    qDebug() << "DEBUG: " << __PRETTY_FUNCTION__ << d;
     if (!d->connectedSignals.contains(signal) && d->daemon) {
         d->setupSignal(signal, true);
     }
