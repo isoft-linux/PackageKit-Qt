@@ -1,7 +1,7 @@
 # PackageKit-Qt
 
-Qt5 bindings for PackageKit, as an extension to the original PackageKit-Qt2 
-(actually using Qt4, don't be fooled 233)
+Qt5 bindings for PackageKit 0.7.6, as an extension to the original 
+PackageKit-Qt2 (actually using Qt4, don't be fooled 233)
 
 
 ## Build & Install
