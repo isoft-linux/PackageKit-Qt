@@ -361,7 +361,7 @@ public:
         QMetaEnum e = T::staticMetaObject.enumerator(id);
 #if QT_VERSION >= 0x050000
         int enumValue = e.keyToValue(realName.toLatin1().data());
-        qDebug() << "DEBUG: " << __PRETTY_FUNCTION__ << __LINE__ << enumValue;
+        //qDebug() << "DEBUG: " << __PRETTY_FUNCTION__ << __LINE__ << enumValue;
 #else
         int enumValue = e.keyToValue(realName.toAscii().data());
 #endif
@@ -369,7 +369,7 @@ public:
         if (enumValue == -1) {
 #if QT_VERSION >= 0x050000
             enumValue = e.keyToValue(prefix.append("Unknown").toLatin1().data());
-            qDebug() << "DEBUG: " << __PRETTY_FUNCTION__ << __LINE__ << enumValue;
+            //qDebug() << "DEBUG: " << __PRETTY_FUNCTION__ << __LINE__ << enumValue;
 #else
             enumValue = e.keyToValue(prefix.append("Unknown").toAscii().data());
 #endif
