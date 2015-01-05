@@ -171,6 +171,7 @@ public:
      * A PID (package ID) uniquely identifies a package among all software repositories
      */
     QString id() const;
+    void setId(const QString &id);
 
     /**
      * Returns the package name, for example vim

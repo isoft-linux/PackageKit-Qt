@@ -131,6 +131,12 @@ QString Package::id() const
     return d->id;
 }
 
+void Package::setId(const QString &id) 
+{
+    Q_D(Package);
+    d->id = id;
+}
+
 QString Package::name() const
 {
     Q_D(const Package);
