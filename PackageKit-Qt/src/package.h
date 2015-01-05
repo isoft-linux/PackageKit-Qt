@@ -77,7 +77,8 @@ public:
         InfoDecompressing,
         InfoUntrusted,
         InfoTrusted,
-        InfoUpdatable
+        InfoUpdatable,
+        InfoWaiting
     } Info;
 
     /**
