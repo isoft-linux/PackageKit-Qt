@@ -76,7 +76,8 @@ public:
         InfoPreparing,
         InfoDecompressing,
         InfoUntrusted,
-        InfoTrusted
+        InfoTrusted,
+        InfoUpdatable
     } Info;
 
     /**
@@ -200,6 +201,7 @@ public:
      * Returns the package's info
      */
     Info info() const;
+    void setInfo(const Info &info);
 
     /**
      * Checks weither the package has details or not

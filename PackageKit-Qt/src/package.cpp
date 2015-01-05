@@ -167,6 +167,12 @@ Package::Info Package::info() const
     return d->info;
 }
 
+void Package::setInfo(const Package::Info &info) 
+{
+    Q_D(Package);
+    d->info = info;
+}
+
 bool Package::hasDetails() const
 {
     Q_D(const Package);
